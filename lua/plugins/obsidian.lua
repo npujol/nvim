@@ -9,7 +9,7 @@ local valid_workspaces = {}
 local potential_workspaces = {
   {
     name = "personal",
-    path = "~/nai_obsidian",
+    path = "/home/nainai/nai_obsidian",
   },
   {
     name = "work",
