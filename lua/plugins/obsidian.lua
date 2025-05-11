@@ -23,8 +23,10 @@ for _, workspace in ipairs(potential_workspaces) do
   end
 end
 
+vim.print(valid_workspaces)
+
 return {
-  "epwalsh/obsidian.nvim",
+  "obsidian-nvim/obsidian.nvim",
   version = "*",
   lazy = true,
   ft = "markdown",
