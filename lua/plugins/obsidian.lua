@@ -23,7 +23,7 @@ for _, workspace in ipairs(potential_workspaces) do
   end
 end
 
-vim.print(valid_workspaces)
+-- vim.print(valid_workspaces)
 
 return {
   "obsidian-nvim/obsidian.nvim",
@@ -35,5 +35,6 @@ return {
   },
   opts = {
     workspaces = valid_workspaces,
+    completion = { blink = true }
   },
 }
