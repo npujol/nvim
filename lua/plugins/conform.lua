@@ -6,6 +6,9 @@ return {
         nix = {
           "alejandra",
         },
+        json = {
+          "jq",
+        }
       },
     },
   },
