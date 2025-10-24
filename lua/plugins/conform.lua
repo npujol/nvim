@@ -8,7 +8,17 @@ return {
         },
         json = {
           "jq",
-        }
+        },
+        go = {
+          "goimports",
+          "gofmt",
+        },
+      },
+      formatters = {
+        golangci_lint = {
+          command = "golangci-lint",
+          args = { "run", "--fix", "$FILENAME" },
+        },
       },
     },
   },
