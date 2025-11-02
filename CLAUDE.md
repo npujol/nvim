@@ -14,6 +14,7 @@ This is a Neovim configuration built on **LazyVim**, a modern Neovim starter tem
 ├── lazy-lock.json                # Locked plugin versions
 ├── lazyvim.json                  # LazyVim extras configuration
 ├── stylua.toml                   # Lua formatter config
+├── .neoconf.json                 # Neodev/lua_ls config for plugin development
 ├── lua/
 │   ├── config/                   # Core Neovim configuration
 │   │   ├── lazy.lua              # Plugin manager bootstrap
@@ -30,9 +31,11 @@ This is a Neovim configuration built on **LazyVim**, a modern Neovim starter tem
 │       ├── tree.lua              # Neo-tree file explorer
 │       ├── fugitive.lua          # Git wrapper
 │       ├── pytest.lua            # Python test runner
+│       ├── color.lua             # Colorscheme + nvim-colorizer
 │       └── ...
-└── colors/
-    └── nai.lua                   # Custom "nai" colorscheme
+├── colors/
+│   └── nai.lua                   # Custom "nai" colorscheme (base16-based)
+└── file-examples/                # Ignored - example files for testing
 ```
 
 ### Initialization Flow
@@ -50,9 +53,21 @@ Plugins in `lua/plugins/*.lua` follow this pattern:
 - **Extend existing configs**: `{ "plugin-name", opts = { ... } }`
 - **Add new plugins**: `{ "plugin-name", config = function() ... end }`
 
-LazyVim plugins lazy-load by default; custom plugins load on startup unless specified otherwise.
+**Loading strategy**: LazyVim plugins lazy-load by default. Custom user plugins load on startup (eager) by default unless `lazy = true` is set. Notable exception: Obsidian is configured with `lazy = true, ft = "markdown"` to defer loading until markdown files are opened.
 
 ## Development Workflows
+
+### Plugin Commands Reference
+
+Essential Lazy.nvim and LazyVim commands:
+
+```vim
+:Lazy sync        " Install/update all plugins
+:Lazy update      " Update all plugins to latest versions
+:Lazy clean       " Remove unused plugin directories
+:Lazy check       " Check for available updates (runs auto, notifications disabled)
+:LazyExtras       " Interactive UI for managing LazyVim extras
+```
 
 ### LazyVim Extras Management
 
@@ -63,7 +78,7 @@ LazyVim extras are configured in `lazyvim.json`. To modify:
 # Or use :LazyExtras command in Neovim
 ```
 
-Current extras: docker, git, go, json, markdown, nix, python, toml, yaml, refactoring, prettier, eslint
+Current extras: docker, git, go, json, markdown, nix, python, toml, yaml, refactoring, prettier, eslint, `lazyvim.plugins.extras.ui.treesitter-context`
 
 ### Tool Management
 
@@ -106,19 +121,38 @@ Custom formatter definitions (like `golangci_lint`) can be added in the `formatt
 
 ### YAML Schema Configuration
 
-`lua/plugins/yaml.lua` contains extensive schema mappings for Kubernetes, GitHub Actions, Ansible, Docker Compose, etc. Add new schemas by mapping file patterns to JSON schema URLs.
+`lua/plugins/yaml.lua` contains extensive schema mappings for validation. Available schemas include:
+- **Kubernetes** manifests (*.k8s.yaml, kube*.yaml)
+- **GitHub Actions** (*.github/workflows/)
+- **Ansible** playbooks and configurations
+- **Docker Compose** (docker-compose.yml)
+- **GitLab CI** (.gitlab-ci.yml)
+- **OpenAPI** specifications
+- **Argo Workflows** (argo-*.yaml)
+
+Schemas are automatically applied based on file patterns. To add new schemas, map file patterns to JSON schema URLs in `lua/plugins/yaml.lua`.
 
 ### Obsidian Integration
 
-Workspace paths are configured in `lua/plugins/obsidian.lua`. The plugin dynamically validates workspace directories before loading. Add new vaults by extending the `potential_workspaces` table.
+Workspace paths are configured in `lua/plugins/obsidian.lua`. The plugin dynamically validates workspace directories before loading - only workspaces that exist on the filesystem are activated. Blink completion integration is enabled for vault references.
+
+To add new vaults, extend the `potential_workspaces` table with new directory paths. The plugin will automatically detect and load them if the directories exist.
 
 ### AI Assistant Configuration
 
-Two AI systems are configured:
-- **CodeCompanion** (`lua/plugins/ai.lua`): Uses local Ollama instance for chat/inline suggestions
-- **Claude Code** (`lua/plugins/claude.lua`): Anthropic's Claude integration
+Three AI systems are configured:
 
-To switch AI providers, modify the adapter settings in `lua/plugins/ai.lua`.
+**CodeCompanion** (`lua/plugins/ai.lua`):
+- Uses local Ollama instance for chat and inline code suggestions
+- Adapter can be switched to `llamaserver` or `gemini` providers
+- Triggered via CodeCompanion keybindings (defined in plugin config)
+
+**Claude Code** (`lua/plugins/claude.lua`):
+- Anthropic's official Claude integration for Neovim
+- Enables Claude Code commands and workflows within the editor
+- Alternative plugin `coder/claudecode.nvim` available if needed
+
+To change AI providers, modify the adapter configuration in `lua/plugins/ai.lua`. The Ollama adapter is set to use local instance, suitable for offline development.
 
 ## Code Formatting
 
@@ -146,11 +180,15 @@ When disabling LazyVim default plugins, explicitly set `enabled = false` in a pl
 
 ## Colorscheme System
 
-Custom colorscheme "nai" is defined in `colors/nai.lua` using base16 color definitions. To modify:
-- Edit `colors/nai.lua` for color values
+Custom colorscheme "nai" is defined in `colors/nai.lua` using base16 color definitions. The colorscheme depends on **base16-nvim** plugin which must load with high priority (`priority = 1000`) before other UI plugins.
+
+To modify the colorscheme:
+- Edit `colors/nai.lua` to change the 16 base16 color values
 - Change `colorscheme = "nai"` in `lua/plugins/color.lua` to switch themes
 
 Fallback themes: tokyonight, habamax
+
+Additional plugin **nvim-colorizer.lua** is also configured in `lua/plugins/color.lua` to show color previews inline for color codes in documents.
 
 ## Git Workflow
 
@@ -162,6 +200,31 @@ git add .
 git commit -m "message"
 git push
 ```
+
+## Performance Optimizations
+
+Several performance optimizations are configured in `lua/config/lazy.lua`:
+
+**Disabled RTP Plugins** (loaded by default in Vim, disabled here):
+- `gzip`, `tarPlugin`, `tohtml`, `tutor`, `zipPlugin`
+
+These are rarely used in modern development workflows and are disabled to reduce startup time.
+
+**Loading Strategy**:
+- LazyVim's own plugins are lazy-loaded on-demand
+- Custom user plugins load eagerly by default (fast startup, all features available)
+- Obsidian is the exception: configured with `lazy = true` to defer loading until markdown files
+
+**Plugin Priority**:
+- `base16-nvim` has `priority = 1000` to ensure it loads before UI plugins that depend on colorschemes
+
+## Neodev Configuration
+
+`.neoconf.json` configures development support for Neovim plugin development:
+- **neodev**: Enables Neovim-specific library support
+- **lua_ls**: Configures the Lua language server for plugin development
+
+This setup is useful when developing or modifying Neovim plugins and configurations. The lua_ls integration provides type hints and autocompletion for Neovim/Lua APIs.
 
 ## Go Development
 
@@ -181,3 +244,5 @@ Python tooling configured for:
 - **Virtual environments**: venv-selector.nvim (from LazyVim extras)
 
 Python tests can be run from within Neovim using pytest.nvim keybindings.
+- to memorize @CLAUDE.md
+- to memorize @CLAUDE.md
