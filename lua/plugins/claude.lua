@@ -7,3 +7,6 @@ return {
     require("claude-code").setup()
   end,
 }
+
+-- Another Option
+-- https://github.com/coder/claudecode.nvim
