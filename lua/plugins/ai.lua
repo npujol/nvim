@@ -68,6 +68,30 @@ return {
             },
           },
         },
+        ["Analista de texto"] = {
+          strategy = "chat",
+          description = "Interpreta el siguiente texto.",
+          opts = {
+            index = 2,
+            is_slash_cmd = true,
+            short_name = "why",
+            auto_submit = true,
+          },
+          prompts = {
+            {
+              role = "system",
+              content =
+              "USA ESPAÑOL PARA LAS RESPUESTAS. Eres un profesor de Español y Literatura. Realiza un análisis detallado del texto dado en español.",
+            },
+            {
+              role = "user",
+              content = function(context)
+                local text = table.concat(context.lines, "\n")
+                return "Interpreta el siguiente texto: \n\n" .. text
+              end,
+            },
+          },
+        },
       },
     })
   end,
