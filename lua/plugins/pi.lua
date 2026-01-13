@@ -46,11 +46,19 @@ local function is_panel_alive()
 
   local result = vim.system({ "kitten", "@", "ls" }):wait()
   if result.code ~= 0 then
+    pi_panel_id = nil
     return false
   end
 
   -- Check if our panel ID is still in the output
-  return string.find(result.stdout, pi_panel_id) ~= nil
+  local is_alive = string.find(result.stdout, "id:" .. pi_panel_id) ~= nil or string.find(result.stdout, pi_panel_id) ~= nil
+
+  if not is_alive then
+    -- Panel is closed, reset the ID so it will be recreated
+    pi_panel_id = nil
+  end
+
+  return is_alive
 end
 
 -- Function to create or reuse a panel with pi
@@ -67,16 +75,19 @@ local function ensure_panel_exists()
     :wait()
 
   if result.code ~= 0 then
-    vim.notify("Failed to create Kitty panel", vim.log.levels.ERROR)
+    vim.notify("Failed to create Kitty panel: " .. (result.stderr or "unknown error"), vim.log.levels.ERROR)
     return false
   end
 
+  -- Extract the window ID from the output - look for "id:" pattern or just the first number
+  pi_panel_id = result.stdout:match("id:(%d+)") or result.stdout:match("(%d+)")
 
-  -- Extract the window ID from the output
-  pi_panel_id = result.stdout:match("(%d+)")
-  -- pi_panel_id = result.code
+  if not pi_panel_id then
+    vim.notify("Failed to extract panel ID from: " .. result.stdout, vim.log.levels.ERROR)
+    return false
+  end
 
-  return pi_panel_id ~= nil
+  return true
 end
 
 -- Generic function to send text to Pi via Kitty
