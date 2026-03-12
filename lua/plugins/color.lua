@@ -31,8 +31,8 @@ return {
     "LazyVim/LazyVim",
     opts = {
       -- colorscheme = "bluloco-light",
-      -- colorscheme = "gruvbox",
-      colorscheme = "nai"
+      colorscheme = "darkside",
+      -- colorscheme = "nai"
     },
   },
 
