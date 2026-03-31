@@ -8,11 +8,11 @@ local function get_project_root()
 
   -- Check if it's a scratch buffer
   if bufname == "" or vim.bo[bufnr].buftype ~= "" then
-    return vim.fn.expand "~"
+    return vim.fn.expand("~")
   end
 
   -- Try to get root from LSP
-  local clients = vim.lsp.get_clients { bufnr = bufnr }
+  local clients = vim.lsp.get_clients({ bufnr = bufnr })
   if #clients > 0 then
     for _, client in ipairs(clients) do
       if client.config.root_dir then
@@ -22,18 +22,17 @@ local function get_project_root()
   end
 
   -- Try to find git root
-  local git_root = vim.fn.systemlist(
-    "git -C " .. vim.fn.shellescape(vim.fn.expand "%:p:h") .. " rev-parse --show-toplevel"
-  )[1]
+  local git_root =
+    vim.fn.systemlist("git -C " .. vim.fn.shellescape(vim.fn.expand("%:p:h")) .. " rev-parse --show-toplevel")[1]
   if git_root and vim.v.shell_error == 0 then
     return git_root
   end
 
   -- Fall back to file's directory or home
   if bufname ~= "" then
-    return vim.fn.expand "%:p:h"
+    return vim.fn.expand("%:p:h")
   else
-    return vim.fn.expand "~"
+    return vim.fn.expand("~")
   end
 end
 
@@ -50,7 +49,8 @@ local function is_panel_alive()
   end
 
   -- Check if our panel ID is still in the output
-  local is_alive = string.find(result.stdout, "id:" .. claudito_panel_id) ~= nil or string.find(result.stdout, claudito_panel_id) ~= nil
+  local is_alive = string.find(result.stdout, "id:" .. claudito_panel_id) ~= nil
+    or string.find(result.stdout, claudito_panel_id) ~= nil
 
   if not is_alive then
     -- Panel is closed, reset the ID so it will be recreated
@@ -70,7 +70,16 @@ local function ensure_panel_exists()
 
   -- Launch a new window with claudito in the current Kitty instance
   local result = vim
-    .system({ "kitten", "@", "launch", "--type=window", "--cwd=" .. root_dir, "claude", "--model", "claude-haiku-4-5-20251001" })
+    .system({
+      "kitten",
+      "@",
+      "launch",
+      "--type=window",
+      "--cwd=" .. root_dir,
+      "claude",
+      "--model",
+      "claude-haiku-4-5-20251001",
+    })
     :wait()
 
   if result.code ~= 0 then
@@ -126,7 +135,7 @@ local function claudito_send_range(first_line, last_line)
 
   -- Create the formatted text
   local text = string.format(
-    "Given this fragment of %s in the range from line %d to %d:\n\n```%s\n%s\n```\n",
+    "Be concret change only the minimum. KISS principle. Dont test it I'll do it. Given this fragment of %s in the range from line %d to %d:\n\n```%s\n%s\n```\n",
     display_name,
     first_line,
     last_line,
@@ -140,8 +149,8 @@ end
 -- Create keybinding to send range to Claudito
 vim.keymap.set("v", "<leader><leader><leader>r", function()
   -- Get visual selection range
-  local start_line = vim.fn.line "v"
-  local end_line = vim.fn.line "."
+  local start_line = vim.fn.line("v")
+  local end_line = vim.fn.line(".")
 
   -- Ensure correct order
   if start_line > end_line then
@@ -153,7 +162,7 @@ end, { desc = "Send selection to Claudito" })
 
 vim.keymap.set("n", "<leader><leader><leader>r", function()
   -- In normal mode, send current line
-  local line = vim.fn.line "."
+  local line = vim.fn.line(".")
   claudito_send_range(line, line)
 end, { desc = "Send current line to Claudito" })
 
@@ -182,10 +191,7 @@ local function claudito_send_diagnostics(first_line, last_line)
 
   -- Format diagnostics
   local diag_text = {}
-  table.insert(
-    diag_text,
-    string.format("Diagnostics for %s (lines %d-%d):\n", display_name, first_line, last_line)
-  )
+  table.insert(diag_text, string.format("Diagnostics for %s (lines %d-%d):\n", display_name, first_line, last_line))
 
   for _, diag in ipairs(diagnostics) do
     local severity = vim.diagnostic.severity[diag.severity]
@@ -204,8 +210,8 @@ end
 -- Create keybinding to send diagnostics to Claudito
 vim.keymap.set("v", "<leader><leader><leader>d", function()
   -- Get visual selection range
-  local start_line = vim.fn.line "v"
-  local end_line = vim.fn.line "."
+  local start_line = vim.fn.line("v")
+  local end_line = vim.fn.line(".")
 
   -- Ensure correct order
   if start_line > end_line then
@@ -220,3 +226,4 @@ vim.keymap.set("n", "<leader><leader><leader>d", function()
   local line_count = vim.api.nvim_buf_line_count(0)
   claudito_send_diagnostics(1, line_count)
 end, { desc = "Send diagnostics for buffer to Claudito" })
+
